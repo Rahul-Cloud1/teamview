@@ -9,9 +9,14 @@ router.post('/', auth, async (req, res) => {
   try {
     const { name, description, members } = req.body;
     if (!name) return res.status(400).json({ message: 'Project name is required' });
-    const project = await Project.create({ name, description, members: members || [], createdBy: req.user._id });
+    // Auto-add creator as member
+    const membersList = members || [];
+    if (!membersList.includes(req.user._id.toString())) {
+      membersList.push(req.user._id);
+    }
+    const project = await Project.create({ name, description, members: membersList, createdBy: req.user._id });
     await project.populate('members', 'name email');
-    res.json(project);
+    res.status(201).json(project);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
