@@ -44,6 +44,6 @@ mongoose.connect(MONGO, {
 // Start server regardless of MongoDB connection status
 app.get('/health', (req, res) => res.send('OK'));
 app.listen(PORT, () => {
-  console.console.log(`✓ Server running on port ${PORT}`);
+  console.log(`✓ Server running on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
 });
