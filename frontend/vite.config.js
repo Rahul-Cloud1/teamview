@@ -11,5 +11,8 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  define: {
+    __APP_ENV__: JSON.stringify(process.env.NODE_ENV)
   }
 })

@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const api = axios.create()
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
+
+const api = axios.create({ baseURL: API_URL })
 api.interceptors.request.use(cfg => {
   const token = localStorage.getItem('token')
   if (token) cfg.headers.Authorization = `Bearer ${token}`
