@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; }
+* { box-sizing: border-box; }
+button { padding: 8px 16px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+button:hover { background: #0056b3; }
+input, textarea, select { padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; width: 100%; }
+form div { margin: 10px 0; }
