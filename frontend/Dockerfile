@@ -1,14 +1,30 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source
+COPY . .
+
+# Build app
+RUN npm run build
+
+# Production stage
 FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+# Install serve to run the built app
+RUN npm install -g serve
 
-COPY . .
-
-RUN npm run build
+# Copy built app from builder
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["npm", "run", "preview"]
+CMD ["serve", "-s", "dist", "-l", "3000"]

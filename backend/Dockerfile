@@ -2,11 +2,17 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-RUN npm install --production
 
+# Install dependencies
+RUN npm install --production=false
+
+# Copy source code
 COPY src/ ./src/
 
+# Expose port
 EXPOSE 4000
 
-CMD ["npm", "run", "start"]
+# Start application
+CMD ["node", "src/index.js"]
