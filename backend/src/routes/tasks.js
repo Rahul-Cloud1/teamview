@@ -15,8 +15,8 @@ router.post('/', auth, async (req, res) => {
     const isMember = proj.members.map(String).includes(String(req.user._id)) || req.user.role === 'Admin';
     if (!isMember) return res.status(403).json({ message: 'Not a project member' });
     const task = await Task.create({ title, description, dueDate, assignee, project, createdBy: req.user._id });
-    await task.populate('assignee', 'name email').populate('project', 'name').populate('createdBy', 'name email');
-    res.status(201).json(task);
+    await task.populate('assignee', 'name email').populate('project', 'name');
+    res.json(task);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -27,18 +27,18 @@ router.get('/', auth, async (req, res) => {
   try {
     const { project, status, overdue } = req.query;
     const filter = {};
-    
-    // For non-admin users, only show tasks from projects they're members of
-    if (req.user.role !== 'Admin') {
-      const userProjects = await Project.find({ members: req.user._id }).select('_id');
-      const projectIds = userProjects.map(p => p._id);
-      filter.project = { $in: projectIds };
-    }
-    
+
+
+
+
+
+
+
+
     if (project) filter.project = project;
     if (status) filter.status = status;
     if (overdue === 'true') filter.dueDate = { $lt: new Date() };
-    
+
     let tasks = await Task.find(filter).populate('assignee', 'name email').populate('project', 'name').populate('createdBy', 'name email');
     res.json(tasks);
   } catch (err) {

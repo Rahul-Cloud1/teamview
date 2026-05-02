@@ -23,7 +23,7 @@ app.use('/api/tasks', taskRoutes);
 app.get('/', (req, res) => res.json({ ok: true, message: 'TeamFlow API' }));
 
 const PORT = process.env.PORT || 4000;
-const MONGO = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017/teamflow';
+const MONGO = process.env.MONGO_URL || 'mongodb://localhost:27017/teamflow';
 
 console.log('Attempting to connect to MongoDB...');
 
