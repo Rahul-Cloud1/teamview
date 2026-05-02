@@ -10,7 +10,10 @@ const projectRoutes = require('./routes/projects');
 const taskRoutes = require('./routes/tasks');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  credentials: true
+}));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
@@ -20,7 +23,7 @@ app.use('/api/tasks', taskRoutes);
 app.get('/', (req, res) => res.json({ ok: true, message: 'TeamFlow API' }));
 
 const PORT = process.env.PORT || 4000;
-const MONGO = process.env.MONGODB_URI || 'mongodb://localhost:27017/teamflow';
+const MONGO = process.env.MONGODB_URL || 'mongodb://localhost:27017/teamflow';
 
 console.log('Attempting to connect to MongoDB...');
 
@@ -39,7 +42,8 @@ mongoose.connect(MONGO, {
   });
 
 // Start server regardless of MongoDB connection status
+app.get('/health', (req, res) => res.send('OK'));
 app.listen(PORT, () => {
-  console.log(`✓ Server listening on http://localhost:${PORT}`);
+  console.console.log(`✓ Server running on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
 });
