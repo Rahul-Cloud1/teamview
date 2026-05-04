@@ -23,7 +23,9 @@ export default function Login(){
       const body = isSignup ? { name, email, password } : { email, password }
       const res = await axios.post(url, body)
       localStorage.setItem('token', res.data.token)
-      localStorage.setItem('user', JSON.stringify(res.data.user))
+      if (res.data.user) {
+        localStorage.setItem('user', JSON.stringify(res.data.user))
+      }
       nav('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || err.message)

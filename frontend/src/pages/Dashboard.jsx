@@ -31,8 +31,14 @@ export default function Dashboard(){
 
   useEffect(()=>{
     if (!localStorage.getItem('token')) return nav('/')
-    const u = JSON.parse(localStorage.getItem('user') || '{}')
-    setUser(u)
+    try {
+      const userStr = localStorage.getItem('user') || '{}'
+      const u = userStr === 'undefined' ? {} : JSON.parse(userStr)
+      setUser(u)
+    } catch (err) {
+      console.error('Failed to parse user from storage:', err)
+      setUser({})
+    }
     loadProjects()
     loadTasks()
     loadAllUsers()
