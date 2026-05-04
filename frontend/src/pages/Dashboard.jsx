@@ -54,10 +54,11 @@ export default function Dashboard(){
   const loadProjects = async ()=>{
     try{
       const res = await api.get('/api/projects')
-      setProjects(res.data)
+      setProjects(Array.isArray(res.data) ? res.data : [])
     }catch(err){
       setError('Failed to load projects')
       console.error(err)
+      setProjects([])
     }finally{
       setLoading(false)
     }
@@ -66,18 +67,20 @@ export default function Dashboard(){
   const loadTasks = async ()=>{
     try{
       const res = await api.get('/api/tasks')
-      setTasks(res.data)
+      setTasks(Array.isArray(res.data) ? res.data : [])
     }catch(err){
       console.error(err)
+      setTasks([])
     }
   }
 
   const loadAllUsers = async () => {
     try {
       const res = await api.get('/api/auth/users')
-      setAllUsers(res.data)
+      setAllUsers(Array.isArray(res.data) ? res.data : [])
     } catch (err) {
       console.error(err)
+      setAllUsers([])
     }
   }
 
