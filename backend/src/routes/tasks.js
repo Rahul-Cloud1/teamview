@@ -14,8 +14,13 @@ router.post('/', auth, async (req, res) => {
     if (!proj) return res.status(400).json({ message: 'Invalid project' });
     const isMember = proj.members.map(String).includes(String(req.user._id)) || req.user.role === 'Admin';
     if (!isMember) return res.status(403).json({ message: 'Not a project member' });
-    const task = await Task.create({ title, description, dueDate, assignee, project, createdBy: req.user._id });
-    await task.populate('assignee', 'name email').populate('project', 'name');
+    const taskData = { title, description, dueDate, project, createdBy: req.user._id };
+    if (assignee && assignee.trim()) taskData.assignee = assignee;
+    const task = await Task.create(taskData);
+    await task.populate([
+      { path: 'assignee', select: 'name email' },
+      { path: 'project', select: 'name' }
+    ]);
     res.json(task);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -67,12 +72,17 @@ router.patch('/:id', auth, async (req, res) => {
     if (!isMember) return res.status(403).json({ message: 'Not a project member' });
     const { status, assignee, title, description, dueDate } = req.body;
     if (status) task.status = status;
-    if (assignee) task.assignee = assignee;
+    if (assignee && assignee.trim()) task.assignee = assignee;
+    else if (assignee === '') task.assignee = null;
     if (title) task.title = title;
     if (description) task.description = description;
     if (dueDate) task.dueDate = dueDate;
     await task.save();
-    await task.populate('assignee', 'name email').populate('project', 'name').populate('createdBy', 'name email');
+    await task.populate([
+      { path: 'assignee', select: 'name email' },
+      { path: 'project', select: 'name' },
+      { path: 'createdBy', select: 'name email' }
+    ]);
     res.json(task);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });

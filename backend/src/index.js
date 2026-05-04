@@ -43,7 +43,24 @@ mongoose.connect(MONGO, {
 
 // Start server regardless of MongoDB connection status
 app.get('/health', (req, res) => res.send('OK'));
-app.listen(PORT, () => {
+
+const server = app.listen(PORT, () => {
   console.log(`✓ Server running on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
+});
+
+// Enable port reuse and handle errors gracefully
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n❌ Port ${PORT} is already in use.`);
+    console.error('Solution: Wait a moment for the port to be released, then restart.');
+    console.error('Or kill any lingering node processes: taskkill /F /IM node.exe');
+    process.exit(1);
+  }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, closing server...');
+  server.close(() => process.exit(0));
 });
