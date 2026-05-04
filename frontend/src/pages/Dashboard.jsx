@@ -86,15 +86,24 @@ export default function Dashboard(){
 
   const createProject = async e => {
     e.preventDefault()
+    if (!projectForm.name.trim()) {
+      setError('Project name is required')
+      return
+    }
     try{
       const res = await api.post('/api/projects', projectForm)
-      setProjectForm({ name: '', description: '' })
-      setShowProjectForm(false)
-      setSelectedProject(res.data._id)
-      loadProjects()
-      setError('')
+      if (res.data && res.data._id) {
+        setProjectForm({ name: '', description: '' })
+        setShowProjectForm(false)
+        setSelectedProject(res.data._id)
+        loadProjects()
+        setError('')
+      } else {
+        setError('Invalid response from server')
+      }
     }catch(err){
-      setError(err.response?.data?.message || 'Failed to create project')
+      console.error('Create project error:', err)
+      setError(err.response?.data?.message || err.message || 'Failed to create project')
     }
   }
 
