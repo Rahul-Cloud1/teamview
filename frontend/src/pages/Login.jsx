@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export default function Login(){
   const [email, setEmail] = useState('')
@@ -19,7 +19,7 @@ export default function Login(){
     setLoading(true)
     try {
       const path = isSignup ? '/auth/signup' : '/auth/login'
-      const url = `${API_URL}/api${path}`
+      const url = `${API_URL}${path}`
       const body = isSignup ? { name, email, password } : { email, password }
       const res = await axios.post(url, body)
       localStorage.setItem('token', res.data.token)

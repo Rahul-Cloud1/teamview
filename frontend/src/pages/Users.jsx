@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 const api = axios.create({ baseURL: API_URL })
 api.interceptors.request.use(cfg => {
@@ -30,7 +30,7 @@ export default function Users(){
 
   const loadUsers = async () => {
     try {
-      const res = await api.get('/api/auth/users')
+      const res = await api.get('/auth/users')
       setUsers(res.data)
     } catch (err) {
       setError('Failed to load users')
@@ -42,7 +42,7 @@ export default function Users(){
 
   const changeRole = async (userId, newRole) => {
     try {
-      await api.patch(`/api/auth/users/${userId}/role`, { role: newRole })
+      await api.patch(`/auth/users/${userId}/role`, { role: newRole })
       setError('')
       loadUsers()
     } catch (err) {

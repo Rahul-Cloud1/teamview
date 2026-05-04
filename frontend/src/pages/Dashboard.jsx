@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 const api = axios.create({ baseURL: API_URL })
 api.interceptors.request.use(cfg => {
@@ -53,7 +53,7 @@ export default function Dashboard(){
 
   const loadProjects = async ()=>{
     try{
-      const res = await api.get('/api/projects')
+      const res = await api.get('/projects')
       setProjects(Array.isArray(res.data) ? res.data : [])
     }catch(err){
       setError('Failed to load projects')
@@ -66,7 +66,7 @@ export default function Dashboard(){
 
   const loadTasks = async ()=>{
     try{
-      const res = await api.get('/api/tasks')
+      const res = await api.get('/tasks')
       setTasks(Array.isArray(res.data) ? res.data : [])
     }catch(err){
       console.error(err)
@@ -76,7 +76,7 @@ export default function Dashboard(){
 
   const loadAllUsers = async () => {
     try {
-      const res = await api.get('/api/auth/list')
+      const res = await api.get('/auth/list')
       setAllUsers(Array.isArray(res.data) ? res.data : [])
     } catch (err) {
       console.error(err)
@@ -91,7 +91,7 @@ export default function Dashboard(){
       return
     }
     try{
-      const res = await api.post('/api/projects', projectForm)
+      const res = await api.post('/projects', projectForm)
       if (res.data && res.data._id) {
         setProjectForm({ name: '', description: '' })
         setShowProjectForm(false)
@@ -110,7 +110,7 @@ export default function Dashboard(){
   const deleteProject = async (projectId) => {
     if (!window.confirm('Delete this project?')) return
     try {
-      await api.delete(`/api/projects/${projectId}`)
+      await api.delete(`/projects/${projectId}`)
       if (selectedProject === projectId) setSelectedProject(null)
       loadProjects()
       setError('')
@@ -127,9 +127,9 @@ export default function Dashboard(){
     }
     try{
       if (editingTask) {
-        await api.patch(`/api/tasks/${editingTask._id}`, { ...taskForm, project: selectedProject })
+        await api.patch(`/tasks/${editingTask._id}`, { ...taskForm, project: selectedProject })
       } else {
-        await api.post('/api/tasks', { ...taskForm, project: selectedProject })
+        await api.post('/tasks', { ...taskForm, project: selectedProject })
       }
       setTaskForm({ title: '', description: '', dueDate: '', assignee: '' })
       setShowTaskForm(false)
@@ -143,7 +143,7 @@ export default function Dashboard(){
 
   const updateTask = async (taskId, status) => {
     try{
-      await api.patch(`/api/tasks/${taskId}`, { status })
+      await api.patch(`/tasks/${taskId}`, { status })
       loadTasks()
     }catch(err){
       setError('Failed to update task')
@@ -153,7 +153,7 @@ export default function Dashboard(){
   const deleteTask = async (taskId) => {
     if (!window.confirm('Delete this task?')) return
     try {
-      await api.delete(`/api/tasks/${taskId}`)
+      await api.delete(`/tasks/${taskId}`)
       loadTasks()
       setError('')
     } catch (err) {
@@ -182,7 +182,7 @@ export default function Dashboard(){
     e.preventDefault()
     if (!selectedProject || !newMemberId) return
     try {
-      await api.post(`/api/projects/${selectedProject}/members`, { memberId: newMemberId })
+      await api.post(`/projects/${selectedProject}/members`, { memberId: newMemberId })
       setNewMemberId('')
       setShowMemberForm(false)
       loadProjects()
@@ -195,7 +195,7 @@ export default function Dashboard(){
   const removeMember = async (projectId, memberId) => {
     if (!window.confirm('Remove this member?')) return
     try {
-      await api.delete(`/api/projects/${projectId}/members/${memberId}`)
+      await api.delete(`/projects/${projectId}/members/${memberId}`)
       loadProjects()
       setError('')
     } catch (err) {

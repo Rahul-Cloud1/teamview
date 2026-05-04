@@ -33,10 +33,10 @@ app.get('/health', (req, res) => res.send('OK'));
 
 // ENV variables
 const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGODB_URI;
 
 if (!MONGO_URI) {
-  console.error("❌ MONGO_URI missing in Railway variables");
+  console.error("❌ MONGODB_URI missing in Railway variables");
   process.exit(1);
 }
 
