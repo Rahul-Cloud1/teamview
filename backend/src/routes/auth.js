@@ -46,6 +46,16 @@ router.get('/users', auth, permit('Admin'), async (req, res) => {
   }
 });
 
+// Get all users for assignment (public, auth required)
+router.get('/list', auth, async (req, res) => {
+  try {
+    const users = await User.find().select('_id name email');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 // Change user role (Admin only)
 router.patch('/users/:id/role', auth, permit('Admin'), async (req, res) => {
   try {

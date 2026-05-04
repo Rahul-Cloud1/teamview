@@ -76,7 +76,7 @@ export default function Dashboard(){
 
   const loadAllUsers = async () => {
     try {
-      const res = await api.get('/api/auth/users')
+      const res = await api.get('/api/auth/list')
       setAllUsers(Array.isArray(res.data) ? res.data : [])
     } catch (err) {
       console.error(err)
