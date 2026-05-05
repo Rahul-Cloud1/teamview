@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL = import.meta.env.VITE_API_URL || '/api'
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
 const api = axios.create({ baseURL: API_URL })
 api.interceptors.request.use(cfg => {

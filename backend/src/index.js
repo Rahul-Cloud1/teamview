@@ -12,8 +12,10 @@ const taskRoutes = require('./routes/tasks');
 const app = express();
 
 // Middlewares
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://teamview-production.up.railway.app';
+
 app.use(cors({
-  origin: "*",
+  origin: FRONTEND_URL,
   credentials: true
 }));
 app.use(express.json());
