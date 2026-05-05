@@ -27,6 +27,7 @@ export default function Dashboard(){
   const [newMemberId, setNewMemberId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const nav = useNavigate()
 
   useEffect(()=>{
@@ -209,7 +210,16 @@ export default function Dashboard(){
     nav('/')
   }
 
-  if (loading) return <div style={styles.loading}>Loading...</div>
+  if (loading) {
+    return (
+      <div style={styles.loadingContainer}>
+        <div style={styles.loadingSpinner}>
+          <div style={styles.spinner}></div>
+          <p>Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   const filteredTasks = selectedProject 
     ? tasks.filter(t => t.project && t.project._id === selectedProject)
@@ -228,33 +238,44 @@ export default function Dashboard(){
 
   return (
     <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div>
-          <h2 style={{ margin: 0 }}>Welcome, {user?.name}</h2>
-          <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: 14 }}>Team Task Manager</p>
+      {/* Modern Header */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <div>
+            <h2 style={styles.greeting}>Welcome, <span style={{ color: 'var(--primary)' }}>{user?.name}</span></h2>
+            <p style={styles.headerSubtext}>Manage your projects and tasks</p>
+          </div>
+          <div style={styles.headerActions}>
+            <span style={styles.role}>{user?.role}</span>
+            {user?.role === 'Admin' && (
+              <button onClick={() => nav('/users')} style={styles.navButton}>👥 Users</button>
+            )}
+            <button onClick={logout} style={{ ...styles.navButton, background: 'var(--danger)' }}>↪️ Logout</button>
+          </div>
         </div>
-        <div style={styles.headerActions}>
-          <span style={styles.role}>{user?.role}</span>
-          {user?.role === 'Admin' && (
-            <button onClick={() => nav('/users')} style={styles.btnSecondary}>👥 Users</button>
-          )}
-          <button onClick={logout} style={styles.btnDanger}>Logout</button>
-        </div>
-      </div>
+      </header>
 
-      {error && <div style={styles.errorBox}>{error}</div>}
+      {error && <div style={styles.errorAlert}>{error}</div>}
 
-      <div style={styles.mainGrid}>
+      <div style={styles.mainLayout}>
         {/* Sidebar - Projects */}
-        <div style={styles.sidebar}>
+        <aside style={{
+          ...styles.sidebar,
+          transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+        }}>
           <div style={styles.sidebarHeader}>
-            <h3>Projects</h3>
-            <button onClick={()=>setShowProjectForm(!showProjectForm)} style={styles.btnSmall}>+</button>
+            <h3 style={{ margin: 0 }}>📋 Projects</h3>
+            <button 
+              onClick={() => setShowProjectForm(!showProjectForm)} 
+              style={styles.btnAdd}
+              title="Create new project"
+            >
+              +
+            </button>
           </div>
 
           {showProjectForm && (
-            <form onSubmit={createProject} style={styles.form}>
+            <form onSubmit={createProject} style={styles.formBox}>
               <input 
                 placeholder="Project name" 
                 value={projectForm.name} 
@@ -266,57 +287,97 @@ export default function Dashboard(){
                 placeholder="Description" 
                 value={projectForm.description} 
                 onChange={e=>setProjectForm({...projectForm, description: e.target.value})} 
-                style={{...styles.input, minHeight: 60}}
+                style={{...styles.input, minHeight: 80}}
                 rows="3"
               />
-              <button type="submit" style={styles.btnPrimary}>Create</button>
-              <button type="button" onClick={()=>setShowProjectForm(false)} style={styles.btnSecondary}>Cancel</button>
+              <button type="submit" style={styles.btnSubmit}>Create Project</button>
+              <button type="button" onClick={() => setShowProjectForm(false)} style={styles.btnCancel}>Cancel</button>
             </form>
           )}
 
-          <ul style={styles.projectList}>
-            {projects.map(p => (
-              <li key={p._id} style={{...styles.projectItem, background: selectedProject === p._id ? '#e3f2fd' : '#f5f5f5'}}>
-                <div onClick={()=>setSelectedProject(p._id)} style={{ flex: 1, cursor: 'pointer' }}>
-                  <strong>{p.name}</strong>
-                  <p style={styles.projectMeta}>{p.members?.length || 0} members</p>
+          <div style={styles.projectsList}>
+            {projects.length === 0 ? (
+              <p style={styles.emptyMessage}>No projects yet. Create one to get started!</p>
+            ) : (
+              projects.map(p => (
+                <div 
+                  key={p._id} 
+                  onClick={() => {
+                    setSelectedProject(p._id)
+                    setMobileMenuOpen(false)
+                  }}
+                  style={{
+                    ...styles.projectCard,
+                    background: selectedProject === p._id ? 'var(--primary)' : 'var(--light)',
+                    color: selectedProject === p._id ? 'white' : 'var(--dark)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ display: 'block', marginBottom: '0.25rem' }}>
+                      📦 {p.name}
+                    </strong>
+                    <small style={{ opacity: 0.8 }}>
+                      {p.members?.length || 0} member{(p.members?.length || 0) !== 1 ? 's' : ''}
+                    </small>
+                  </div>
+                  {user?.role === 'Admin' && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteProject(p._id)
+                      }} 
+                      style={styles.btnDelete}
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </div>
-                {user?.role === 'Admin' && (
-                  <button onClick={() => deleteProject(p._id)} style={styles.btnTiny}>🗑️</button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+              ))
+            )}
+          </div>
+        </aside>
 
         {/* Main Content */}
-        <div style={styles.main}>
+        <main style={styles.mainContent}>
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={styles.mobileMenuToggle}
+          >
+            ☰ Menu
+          </button>
+
           {!selectedProject ? (
             <div style={styles.emptyState}>
+              <div style={styles.emptyIcon}>🚀</div>
               <h3>Select a project to start</h3>
-              <p>Create a new project or click on an existing one</p>
+              <p>Choose an existing project or create a new one from the sidebar</p>
             </div>
           ) : (
             <>
-              {/* Project Info */}
-              <div style={styles.projectInfo}>
+              {/* Project Header */}
+              <div style={styles.projectHeader}>
                 <div>
-                  <h3>{selectedProjectData?.name}</h3>
-                  {selectedProjectData?.description && <p>{selectedProjectData.description}</p>}
+                  <h3 style={{ marginBottom: '0.5rem' }}>📦 {selectedProjectData?.name}</h3>
+                  {selectedProjectData?.description && (
+                    <p style={styles.projectDescription}>{selectedProjectData.description}</p>
+                  )}
                 </div>
               </div>
 
               {/* Members Section */}
-              <div style={styles.section}>
+              <section style={styles.section}>
                 <div style={styles.sectionHeader}>
-                  <h4>Team Members ({selectedProjectData?.members?.length || 0})</h4>
+                  <h4 style={{ margin: 0 }}>👥 Team Members ({selectedProjectData?.members?.length || 0})</h4>
                   {user?.role === 'Admin' && (
-                    <button onClick={() => setShowMemberForm(!showMemberForm)} style={styles.btnSmall}>+ Add</button>
+                    <button onClick={() => setShowMemberForm(!showMemberForm)} style={styles.btnAdd}>
+                      + Add
+                    </button>
                   )}
                 </div>
 
                 {showMemberForm && (
-                  <form onSubmit={addMember} style={styles.form}>
+                  <form onSubmit={addMember} style={styles.formBox}>
                     <select 
                       value={newMemberId} 
                       onChange={e => setNewMemberId(e.target.value)}
@@ -328,41 +389,53 @@ export default function Dashboard(){
                         <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
                       ))}
                     </select>
-                    <button type="submit" style={styles.btnPrimary}>Add Member</button>
-                    <button type="button" onClick={() => setShowMemberForm(false)} style={styles.btnSecondary}>Cancel</button>
+                    <button type="submit" style={styles.btnSubmit}>Add Member</button>
+                    <button type="button" onClick={() => setShowMemberForm(false)} style={styles.btnCancel}>Cancel</button>
                   </form>
                 )}
 
                 <div style={styles.membersList}>
-                  {selectedProjectData?.members?.map(m => (
-                    <div key={m._id} style={styles.memberItem}>
-                      <div>
-                        <strong>{m.name}</strong>
-                        <p style={styles.memberEmail}>{m.email}</p>
+                  {selectedProjectData?.members?.length === 0 ? (
+                    <p style={styles.emptyMessage}>No members yet. Add one to collaborate!</p>
+                  ) : (
+                    selectedProjectData?.members?.map(m => (
+                      <div key={m._id} style={styles.memberCard}>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ display: 'block', marginBottom: '0.25rem' }}>👤 {m.name}</strong>
+                          <small style={{ color: 'var(--gray)' }}>{m.email}</small>
+                        </div>
+                        {user?.role === 'Admin' && (
+                          <button 
+                            onClick={() => removeMember(selectedProject, m._id)} 
+                            style={styles.btnDelete}
+                          >
+                            ✕
+                          </button>
+                        )}
                       </div>
-                      {user?.role === 'Admin' && (
-                        <button onClick={() => removeMember(selectedProject, m._id)} style={styles.btnTiny}>Remove</button>
-                      )}
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
-              </div>
+              </section>
 
               {/* Tasks Section */}
-              <div style={styles.section}>
+              <section style={styles.section}>
                 <div style={styles.sectionHeader}>
-                  <h4>Tasks</h4>
-                  <button onClick={()=>setShowTaskForm(!showTaskForm)} style={styles.btnSmall}>+ New</button>
+                  <h4 style={{ margin: 0 }}>✓ Tasks</h4>
+                  <button onClick={() => setShowTaskForm(!showTaskForm)} style={styles.btnAdd}>
+                    + New Task
+                  </button>
                 </div>
 
                 {showTaskForm && (
-                  <form onSubmit={createTask} style={styles.form}>
+                  <form onSubmit={createTask} style={styles.formBox}>
                     <div>
                       <label style={styles.label}>Title *</label>
                       <input 
                         value={taskForm.title} 
                         onChange={e=>setTaskForm({...taskForm, title: e.target.value})} 
                         style={styles.input}
+                        placeholder="Enter task title"
                         required
                       />
                     </div>
@@ -371,91 +444,133 @@ export default function Dashboard(){
                       <textarea 
                         value={taskForm.description} 
                         onChange={e=>setTaskForm({...taskForm, description: e.target.value})} 
-                        style={{...styles.input, minHeight: 60}}
+                        style={{...styles.input, minHeight: 100}}
+                        placeholder="Describe the task..."
                         rows="3"
                       />
                     </div>
-                    <div>
-                      <label style={styles.label}>Due Date</label>
-                      <input 
-                        type="date" 
-                        value={taskForm.dueDate} 
-                        onChange={e=>setTaskForm({...taskForm, dueDate: e.target.value})}
-                        style={styles.input}
-                      />
+                    <div style={styles.formRow}>
+                      <div style={{ flex: 1 }}>
+                        <label style={styles.label}>Due Date</label>
+                        <input 
+                          type="date" 
+                          value={taskForm.dueDate} 
+                          onChange={e=>setTaskForm({...taskForm, dueDate: e.target.value})}
+                          style={styles.input}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={styles.label}>Assign To</label>
+                        <select 
+                          value={taskForm.assignee} 
+                          onChange={e=>setTaskForm({...taskForm, assignee: e.target.value})}
+                          style={styles.input}
+                        >
+                          <option value="">Unassigned</option>
+                          {selectedProjectData?.members?.map(m => (
+                            <option key={m._id} value={m._id}>{m.name}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                    <div>
-                      <label style={styles.label}>Assign To</label>
-                      <select 
-                        value={taskForm.assignee} 
-                        onChange={e=>setTaskForm({...taskForm, assignee: e.target.value})}
-                        style={styles.input}
-                      >
-                        <option value="">Unassigned</option>
-                        {selectedProjectData?.members?.map(m => (
-                          <option key={m._id} value={m._id}>{m.name}</option>
-                        ))}
-                      </select>
+                    <div style={styles.formActions}>
+                      <button type="submit" style={styles.btnSubmit}>
+                        {editingTask ? '✓ Update Task' : '+ Create Task'}
+                      </button>
+                      <button type="button" onClick={cancelEdit} style={styles.btnCancel}>Cancel</button>
                     </div>
-                    <button type="submit" style={styles.btnPrimary}>{editingTask ? 'Update' : 'Create'} Task</button>
-                    <button type="button" onClick={cancelEdit} style={styles.btnSecondary}>Cancel</button>
                   </form>
                 )}
 
                 {overdueTasks.length > 0 && (
-                  <div style={styles.alertBox}>
-                    <strong>⚠️ {overdueTasks.length} overdue task(s)</strong>
+                  <div style={styles.warningBox}>
+                    <strong>⚠️ {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}</strong>
                   </div>
                 )}
 
-                {['Todo', 'In Progress', 'Done'].map(status => (
-                  <div key={status} style={styles.statusSection}>
-                    <h5 style={styles.statusTitle}>{status} ({tasksByStatus[status].length})</h5>
-                    {tasksByStatus[status].length === 0 ? (
-                      <p style={styles.emptyText}>No tasks</p>
-                    ) : (
-                      <div style={styles.tasksList}>
-                        {tasksByStatus[status].map(t => (
-                          <div key={t._id} style={styles.taskCard}>
-                            <div style={{ flex: 1 }}>
-                              <strong>{t.title}</strong>
-                              {t.description && <p style={styles.taskDesc}>{t.description}</p>}
-                              <div style={styles.taskMeta}>
-                                {t.dueDate && (
-                                  <span style={{
-                                    ...styles.taskMetaItem,
-                                    color: new Date(t.dueDate) < new Date() ? '#dc3545' : '#666'
-                                  }}>
-                                    📅 {new Date(t.dueDate).toLocaleDateString()}
-                                  </span>
+                <div style={styles.tasksGrid}>
+                  {['Todo', 'In Progress', 'Done'].map(status => (
+                    <div key={status} style={styles.statusColumn}>
+                      <div style={styles.statusHeader}>
+                        <h5 style={styles.statusTitle}>
+                          {status === 'Todo' && '📝'}
+                          {status === 'In Progress' && '⚙️'}
+                          {status === 'Done' && '✅'}
+                          {' '}{status}
+                        </h5>
+                        <span style={styles.taskCount}>{tasksByStatus[status].length}</span>
+                      </div>
+
+                      {tasksByStatus[status].length === 0 ? (
+                        <p style={styles.emptyMessage}>No tasks</p>
+                      ) : (
+                        <div style={styles.tasksList}>
+                          {tasksByStatus[status].map(t => (
+                            <div key={t._id} style={styles.taskItem}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <strong style={{ 
+                                  display: 'block', 
+                                  marginBottom: '0.5rem',
+                                  wordBreak: 'break-word'
+                                }}>
+                                  {t.title}
+                                </strong>
+                                {t.description && (
+                                  <p style={styles.taskDesc}>{t.description}</p>
                                 )}
-                                {t.assignee && (
-                                  <span style={styles.taskMetaItem}>👤 {t.assignee.name}</span>
+                                <div style={styles.taskMeta}>
+                                  {t.dueDate && (
+                                    <span style={{
+                                      ...styles.metaBadge,
+                                      background: new Date(t.dueDate) < new Date() ? '#fee2e2' : '#dbeafe',
+                                      color: new Date(t.dueDate) < new Date() ? '#991b1b' : '#0c4a6e'
+                                    }}>
+                                      📅 {new Date(t.dueDate).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                  {t.assignee && (
+                                    <span style={styles.metaBadge}>
+                                      👤 {t.assignee.name}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div style={styles.taskActions}>
+                                {status !== 'Done' && (
+                                  <button 
+                                    onClick={() => updateTask(t._id, status === 'Todo' ? 'In Progress' : 'Done')} 
+                                    style={styles.btnAction}
+                                    title={status === 'Todo' ? 'Start' : 'Complete'}
+                                  >
+                                    {status === 'Todo' ? '▶️' : '✓'}
+                                  </button>
                                 )}
+                                <button 
+                                  onClick={() => startEditTask(t)} 
+                                  style={styles.btnAction}
+                                  title="Edit"
+                                >
+                                  ✏️
+                                </button>
+                                <button 
+                                  onClick={() => deleteTask(t._id)} 
+                                  style={{...styles.btnAction, color: 'var(--danger)'}}
+                                  title="Delete"
+                                >
+                                  🗑️
+                                </button>
                               </div>
                             </div>
-                            <div style={styles.taskActions}>
-                              {status !== 'Done' && (
-                                <button 
-                                  onClick={()=>updateTask(t._id, status === 'Todo' ? 'In Progress' : 'Done')} 
-                                  style={styles.btnSuccess}
-                                >
-                                  {status === 'Todo' ? '▶️ Start' : '✓ Done'}
-                                </button>
-                              )}
-                              <button onClick={() => startEditTask(t)} style={styles.btnInfo}>✏️ Edit</button>
-                              <button onClick={() => deleteTask(t._id)} style={styles.btnDanger}>🗑️ Delete</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
             </>
           )}
-        </div>
+        </main>
       </div>
     </div>
   )
@@ -463,288 +578,408 @@ export default function Dashboard(){
 
 const styles = {
   container: {
-    background: '#f8f9fa',
     minHeight: '100vh',
+    background: 'var(--light)',
   },
+  
+  /* Header */
   header: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
     color: 'white',
-    padding: '30px',
-    marginBottom: '30px',
-    borderRadius: '8px',
+    padding: 'clamp(1.25rem, 5vw, 2rem)',
+    marginBottom: '2rem',
+    borderRadius: '0 0 1rem 1rem',
+    boxShadow: '0 4px 20px rgba(99, 102, 241, 0.2)',
+  },
+  headerContent: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  headerActions: {
-    display: 'flex',
-    gap: '10px',
-    alignItems: 'center',
-  },
-  role: {
-    background: 'rgba(255,255,255,0.2)',
-    padding: '5px 12px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-  },
-  errorBox: {
-    color: '#dc3545',
-    marginBottom: '20px',
-    padding: '15px',
-    background: '#ffe0e0',
-    borderRadius: '6px',
-    border: '1px solid #ff6b6b',
-  },
-  alertBox: {
-    color: '#856404',
-    marginBottom: '15px',
-    padding: '15px',
-    background: '#fff3cd',
-    borderRadius: '6px',
-    border: '1px solid #ffc107',
-  },
-  mainGrid: {
-    display: 'grid',
-    gridTemplateColumns: '280px 1fr',
-    gap: '20px',
-    padding: '0 20px 20px',
+    gap: '1.5rem',
+    flexWrap: 'wrap',
     maxWidth: '1400px',
     margin: '0 auto',
   },
+  greeting: {
+    fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+    fontWeight: '700',
+    margin: 0,
+    marginBottom: '0.5rem',
+  },
+  headerSubtext: {
+    fontSize: '0.95rem',
+    opacity: 0.9,
+    margin: 0,
+  },
+  headerActions: {
+    display: 'flex',
+    gap: '0.75rem',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  navButton: {
+    padding: '0.625rem 1.25rem',
+    background: 'rgba(255, 255, 255, 0.2)',
+    color: 'white',
+    border: '2px solid rgba(255, 255, 255, 0.3)',
+    borderRadius: '0.5rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '0.9rem',
+    transition: 'all 0.3s ease',
+  },
+  role: {
+    background: 'rgba(255, 255, 255, 0.2)',
+    padding: '0.5rem 1rem',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  
+  /* Error & Warnings */
+  errorAlert: {
+    background: '#fee2e2',
+    border: '2px solid #fecaca',
+    color: '#991b1b',
+    padding: '1rem',
+    borderRadius: '0.5rem',
+    marginBottom: '1.5rem',
+    maxWidth: '1400px',
+    margin: '0 auto 1.5rem',
+    fontWeight: '600',
+  },
+  warningBox: {
+    background: '#fef3c7',
+    border: '2px solid #fde047',
+    color: '#92400e',
+    padding: '1rem',
+    borderRadius: '0.5rem',
+    marginBottom: '1.5rem',
+    fontWeight: '600',
+  },
+
+  /* Layout */
+  mainLayout: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(280px, 1fr) 3fr',
+    gap: '2rem',
+    maxWidth: '1400px',
+    margin: '0 auto',
+    padding: '0 clamp(0.5rem, 3vw, 1.5rem)',
+    marginBottom: '2rem',
+  },
   sidebar: {
     background: 'white',
-    borderRadius: '8px',
-    padding: '20px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    borderRadius: '0.75rem',
+    padding: '1.5rem',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
     height: 'fit-content',
     position: 'sticky',
-    top: '20px',
+    top: '100px',
   },
   sidebarHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '15px',
+    marginBottom: '1.5rem',
+    paddingBottom: '1rem',
+    borderBottom: '2px solid var(--border)',
   },
-  projectList: {
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-  },
-  projectItem: {
-    padding: '12px',
-    margin: '8px 0',
-    background: '#f5f5f5',
-    borderRadius: '6px',
-    cursor: 'pointer',
+  projectsList: {
     display: 'flex',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  },
+  projectCard: {
+    padding: '1rem',
+    borderRadius: '0.5rem',
+    display: 'flex',
     alignItems: 'center',
-    transition: 'all 0.2s',
+    gap: '0.75rem',
+    transition: 'all 0.3s ease',
+    border: '2px solid transparent',
   },
-  projectMeta: {
-    margin: '5px 0 0 0',
-    fontSize: '12px',
-    color: '#666',
+  btnAdd: {
+    background: 'var(--primary)',
+    color: 'white',
+    border: 'none',
+    padding: '0.5rem 0.75rem',
+    borderRadius: '0.5rem',
+    cursor: 'pointer',
+    fontWeight: '700',
+    fontSize: '1.2rem',
+    transition: 'all 0.3s ease',
   },
-  main: {
+  btnDelete: {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    padding: '0.25rem',
+    opacity: 0.7,
+    transition: 'opacity 0.3s ease',
+  },
+  
+  /* Main Content */
+  mainContent: {
     background: 'white',
-    borderRadius: '8px',
-    padding: '25px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    borderRadius: '0.75rem',
+    padding: 'clamp(1rem, 5vw, 2rem)',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
   },
-  emptyState: {
-    textAlign: 'center',
-    padding: '60px 20px',
-    color: '#999',
+  mobileMenuToggle: {
+    display: 'none',
+    background: 'var(--primary)',
+    color: 'white',
+    border: 'none',
+    padding: '0.75rem 1rem',
+    borderRadius: '0.5rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+    marginBottom: '1rem',
+    width: '100%',
   },
-  projectInfo: {
-    borderBottom: '2px solid #f0f0f0',
-    paddingBottom: '20px',
-    marginBottom: '25px',
-  },
+  
+  /* Sections */
   section: {
-    marginBottom: '30px',
-    paddingBottom: '25px',
-    borderBottom: '1px solid #f0f0f0',
+    marginBottom: '2.5rem',
+    paddingBottom: '2rem',
+    borderBottom: '2px solid var(--border)',
   },
   sectionHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '15px',
+    marginBottom: '1.5rem',
+    gap: '1rem',
   },
-  form: {
-    background: '#f9f9f9',
-    padding: '15px',
-    borderRadius: '6px',
-    marginBottom: '15px',
-    border: '1px solid #e9e9e9',
+  projectHeader: {
+    borderBottom: '2px solid var(--border)',
+    paddingBottom: '1.5rem',
+    marginBottom: '2rem',
   },
-  input: {
-    width: '100%',
-    padding: '10px',
-    margin: '8px 0',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    boxSizing: 'border-box',
+  projectDescription: {
+    color: 'var(--gray)',
+    margin: 0,
+    fontSize: '0.95rem',
+  },
+  
+  /* Forms */
+  formBox: {
+    background: 'var(--light)',
+    padding: '1.5rem',
+    borderRadius: '0.5rem',
+    border: '2px solid var(--border)',
+    marginBottom: '1.5rem',
+  },
+  formRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '1rem',
+  },
+  formActions: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '0.75rem',
   },
   label: {
-    display: 'block',
-    fontWeight: 'bold',
-    marginBottom: '5px',
-    fontSize: '13px',
-    color: '#333',
+    fontWeight: '600',
+    color: 'var(--dark)',
+    fontSize: '0.9rem',
   },
+  input: {
+    padding: '0.75rem',
+    border: '2px solid var(--border)',
+    borderRadius: '0.5rem',
+    fontSize: '0.95rem',
+    fontFamily: 'inherit',
+    transition: 'all 0.3s ease',
+    width: '100%',
+  },
+  btnSubmit: {
+    padding: '0.75rem 1.5rem',
+    background: 'var(--primary)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '0.5rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+  },
+  btnCancel: {
+    padding: '0.75rem 1.5rem',
+    background: 'var(--gray)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '0.5rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+  },
+  
+  /* Members */
   membersList: {
     display: 'grid',
-    gap: '10px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: '1rem',
   },
-  memberItem: {
-    padding: '12px',
-    background: '#f9f9f9',
-    borderRadius: '6px',
+  memberCard: {
+    padding: '1rem',
+    background: 'var(--light)',
+    border: '2px solid var(--border)',
+    borderRadius: '0.5rem',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    border: '1px solid #e9e9e9',
+    gap: '1rem',
   },
-  memberEmail: {
-    margin: '3px 0 0 0',
-    fontSize: '12px',
-    color: '#666',
-  },
-  statusSection: {
-    marginBottom: '25px',
-  },
-  statusTitle: {
-    margin: '15px 0 10px 0',
-    padding: '8px 12px',
-    background: '#f0f0f0',
-    borderRadius: '4px',
-    fontSize: '13px',
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    color: '#555',
-  },
-  tasksList: {
+  
+  /* Tasks */
+  tasksGrid: {
     display: 'grid',
-    gap: '12px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: '1.5rem',
   },
-  taskCard: {
-    padding: '15px',
-    background: '#fff',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
+  statusColumn: {
+    background: 'var(--light)',
+    borderRadius: '0.5rem',
+    padding: '1rem',
+    minHeight: '500px',
+  },
+  statusHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '12px',
+    alignItems: 'center',
+    marginBottom: '1rem',
+    paddingBottom: '0.75rem',
+    borderBottom: '2px solid var(--border)',
+  },
+  statusTitle: {
+    margin: 0,
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: 'var(--dark)',
+  },
+  taskCount: {
+    background: 'var(--primary)',
+    color: 'white',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+  },
+  tasksList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  },
+  taskItem: {
+    background: 'white',
+    padding: '1rem',
+    borderRadius: '0.5rem',
+    border: '2px solid var(--border)',
+    display: 'flex',
+    gap: '0.75rem',
+    transition: 'all 0.3s ease',
   },
   taskDesc: {
-    margin: '5px 0',
-    fontSize: '13px',
-    color: '#666',
+    fontSize: '0.85rem',
+    color: 'var(--gray)',
+    margin: '0.5rem 0 0 0',
+    lineHeight: '1.4',
   },
   taskMeta: {
     display: 'flex',
-    gap: '15px',
-    marginTop: '8px',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    marginTop: '0.75rem',
   },
-  taskMetaItem: {
-    fontSize: '12px',
-    color: '#666',
+  metaBadge: {
+    display: 'inline-block',
+    padding: '0.25rem 0.75rem',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    background: '#dbeafe',
+    color: '#0c4a6e',
+    width: 'fit-content',
   },
   taskActions: {
     display: 'flex',
-    gap: '5px',
+    gap: '0.25rem',
     flexShrink: 0,
   },
-  emptyText: {
-    color: '#999',
-    fontStyle: 'italic',
-    margin: 0,
-  },
-  btnPrimary: {
-    background: '#667eea',
-    color: 'white',
-    border: 'none',
-    padding: '10px 16px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    width: '100%',
-    marginTop: '10px',
-    transition: 'background 0.2s',
-  },
-  btnSecondary: {
-    background: '#6c757d',
-    color: 'white',
-    border: 'none',
-    padding: '10px 16px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    width: '100%',
-    marginTop: '10px',
-  },
-  btnDanger: {
-    background: '#dc3545',
-    color: 'white',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  btnSuccess: {
-    background: '#28a745',
-    color: 'white',
-    border: 'none',
-    padding: '6px 10px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    whiteSpace: 'nowrap',
-  },
-  btnInfo: {
-    background: '#17a2b8',
-    color: 'white',
-    border: 'none',
-    padding: '6px 10px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: 'bold',
-  },
-  btnSmall: {
-    background: '#667eea',
-    color: 'white',
-    border: 'none',
-    padding: '5px 10px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  btnTiny: {
+  btnAction: {
     background: 'transparent',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '14px',
-    padding: '4px',
+    fontSize: '1rem',
+    padding: '0.25rem',
+    opacity: 0.7,
+    transition: 'opacity 0.3s ease',
   },
-  loading: {
+  
+  /* Empty States */
+  emptyState: {
     textAlign: 'center',
-    padding: '60px 20px',
-    color: '#666',
+    padding: '3rem 1rem',
+    color: 'var(--gray)',
   },
+  emptyIcon: {
+    fontSize: '3rem',
+    marginBottom: '1rem',
+  },
+  emptyMessage: {
+    color: 'var(--gray)',
+    fontStyle: 'italic',
+    margin: 0,
+    padding: '1rem',
+    textAlign: 'center',
+  },
+  
+  /* Loading */
+  loadingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+  },
+  loadingSpinner: {
+    textAlign: 'center',
+  },
+  spinner: {
+    width: '50px',
+    height: '50px',
+    border: '4px solid var(--light)',
+    borderTop: '4px solid var(--primary)',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    margin: '0 auto 1rem',
+  },
+}
+
+/* Add animation styles at runtime */
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style')
+  style.textContent = `
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @media (max-width: 1024px) {
+      ${JSON.stringify({mainLayout: {gridTemplateColumns: '1fr'}})}
+    }
+    @media (max-width: 768px) {
+      [style*="sidebar"] { display: none; }
+      [style*="tasksGrid"] { gridTemplateColumns: 1fr; }
+      [style*="mobileMenuToggle"] { display: block; }
+      input, textarea, select { font-size: 16px; }
+    }
+    @media (max-width: 480px) {
+      button { width: 100%; }
+    }
+  `
+  document.head.appendChild(style)
 }
 
