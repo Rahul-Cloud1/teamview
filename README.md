@@ -2,6 +2,11 @@
 
 A full-stack web application for creating projects, assigning tasks, and tracking progress with role-based access control.
 
+## 🚀 Live Demo
+
+- **Frontend:** [https://teamview-production.up.railway.app/](https://teamview-production.up.railway.app/)
+- **Backend API:** [https://backend-team-view-production.up.railway.app/](https://backend-team-view-production.up.railway.app/)
+
 ## Features
 
 ✅ **Authentication** — Signup/Login with JWT tokens  
@@ -10,6 +15,7 @@ A full-stack web application for creating projects, assigning tasks, and trackin
 ✅ **Dashboard** — Overview of tasks, status, and overdue items  
 ✅ **Role-Based Access** — Admin and Member roles with permissions  
 ✅ **REST API** — Full backend API with MongoDB  
+✅ **Production Ready** — Deployed and running on Railway  
 
 ## Tech Stack
 
@@ -72,13 +78,29 @@ PORT=4000
 NODE_ENV=development
 ```
 
+## Deployment Status
+
+✅ **Production Deployed** — Application is live on Railway  
+- Frontend deployed and accessible at [https://teamview-production.up.railway.app/](https://teamview-production.up.railway.app/)
+- Backend API deployed and accessible at [https://backend-team-view-production.up.railway.app/](https://backend-team-view-production.up.railway.app/)
+- Auto-deployment enabled on GitHub push
+- MongoDB Atlas integration configured
+
+For detailed deployment configuration, see [RAILWAY.md](./RAILWAY.md)
+
 ## Railway Deployment
 
-1. **Create a Railway account** and link your GitHub repo
-2. **Create two services:**
-   - **Backend:** Node.js service pointing to `backend/` with build command `npm install`
-   - **Frontend:** Node.js service pointing to `frontend/` with build command `npm install && npm run build`
-3. **Set environment variables:**
-   - Add MongoDB URL (Railway plugin or MongoDB Atlas)
-   - Set `JWT_SECRET`
-4. **Deploy** — Railway auto-deploys on push
+This project is deployed on [Railway.app](https://railway.app/) with auto-deployment enabled:
+
+1. **Two services deployed:**
+   - **Backend:** Node.js service with MongoDB connection
+   - **Frontend:** React/Vite application with production build
+
+2. **Environment configuration:**
+   - MongoDB URI connected via Railway plugin
+   - JWT_SECRET configured securely
+   - CORS enabled for cross-origin requests
+
+3. **Auto-deployment:**
+   - Automatic redeployment on push to main branch
+   - Zero-downtime deployments with Railway's deployment strategy
